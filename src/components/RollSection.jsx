@@ -99,17 +99,24 @@ function RollSection() {
     }
     
     let necroticDamage = 0;
+    let hexRolls = [];
+    let reaperRolls = [];
     
     // Add hex damage
     if (hasHex) {
-      necroticDamage += rollDie(6);
+      const hexRoll = rollDie(6);
+      hexRolls.push(hexRoll);
+      necroticDamage += hexRoll;
     }
     
     // Add reaper damage
     if (hasReaper) {
       const reaperDice = Math.floor(state.reapersBloodHp / 10);
       for (let i = 0; i < reaperDice; i++) {
-        necroticDamage += rollDie(8) + rollDie(8);
+        const roll1 = rollDie(8);
+        const roll2 = rollDie(8);
+        reaperRolls.push(roll1, roll2);
+        necroticDamage += roll1 + roll2;
       }
     }
     
@@ -130,6 +137,32 @@ function RollSection() {
       }
     }
     
+    // Collect all dice rolls for display
+    const diceRolls = {
+      damage: { 
+        rolls: [damage1, damage2], 
+        die: damageDie,
+        total: damage1 + damage2,
+        label: `Base Damage (2d${damageDie})`,
+        critBonus: toHitResult.isCrit ? 2 * damageDie : 0
+      },
+      hex: hasHex ? { 
+        rolls: hexRolls, 
+        die: 6, 
+        label: 'Hex',
+        total: hexRolls.reduce((sum, roll) => sum + roll, 0),
+        critBonus: toHitResult.isCrit ? 6 : 0
+      } : null,
+      reaper: hasReaper ? { 
+        rolls: reaperRolls,
+        die: 8, 
+        label: 'Reaper\'s Blood',
+        total: reaperRolls.reduce((sum, roll) => sum + roll, 0),
+        pairs: Math.floor(state.reapersBloodHp / 10),
+        critBonus: toHitResult.isCrit ? Math.floor(state.reapersBloodHp / 10) * 16 : 0
+      } : null
+    };
+
     return {
       attackIndex,
       toHit: toHitResult,
@@ -144,7 +177,14 @@ function RollSection() {
         reaper: hasReaper
       },
       baseDamageRolls: [damage1, damage2],
-      damageDie
+      damageDie,
+      diceRolls,
+      modifiers: {
+        sharpShooterDamage: useSharpShooter ? 10 : 0,
+        curseDamage: hasCurse ? state.modifiers.proficiencyBonus : 0,
+        baseDamage: state.modifiers.damageBonus,
+        criticalHit: toHitResult.isCrit
+      }
     };
   };
 

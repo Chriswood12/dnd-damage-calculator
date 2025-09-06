@@ -155,11 +155,85 @@ function ResultsSection() {
                     </div>
                   )}
 
-                  {/* Roll Details (Compact) */}
-                  <div className="roll-summary">
-                    <span>d{result.damageDie}: {result.baseDamageRolls.join('+')}</span>
+                  {/* Detailed Dice Rolls */}
+                  <div className="dice-rolls-section">
+                    <div className="dice-rolls-header">Dice Rolls:</div>
+                    <div className="dice-rolls-grid">
+                      {/* Base Damage */}
+                      {result.diceRolls?.damage && (
+                        <div className="dice-roll-group">
+                          <div className="dice-roll-label">{result.diceRolls.damage.label}:</div>
+                          <div className="dice-roll-values">
+                            {result.diceRolls.damage.rolls.map((roll, i) => (
+                              <span key={i} className="dice-roll">{roll}</span>
+                            ))}
+                            {result.diceRolls.damage.critBonus > 0 && (
+                              <span className="crit-bonus">+{result.diceRolls.damage.critBonus} (crit)</span>
+                            )}
+                            <span className="roll-total">= {result.diceRolls.damage.total + result.diceRolls.damage.critBonus}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Hex Damage */}
+                      {result.diceRolls?.hex && (
+                        <div className="dice-roll-group necrotic">
+                          <div className="dice-roll-label">{result.diceRolls.hex.label}:</div>
+                          <div className="dice-roll-values">
+                            {result.diceRolls.hex.rolls.map((roll, i) => (
+                              <span key={i} className="dice-roll">{roll}</span>
+                            ))}
+                            {result.diceRolls.hex.critBonus > 0 && (
+                              <span className="crit-bonus">+{result.diceRolls.hex.critBonus} (crit)</span>
+                            )}
+                            <span className="roll-total">= {result.diceRolls.hex.total + result.diceRolls.hex.critBonus}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Reaper Damage */}
+                      {result.diceRolls?.reaper && (
+                        <div className="dice-roll-group necrotic">
+                          <div className="dice-roll-label">{result.diceRolls.reaper.label}:</div>
+                          <div className="dice-roll-values">
+                            {result.diceRolls.reaper.rolls.map((roll, i) => (
+                              <span key={i} className={`dice-roll ${i % 2 === 0 ? 'pair-start' : 'pair-end'}`}>{roll}</span>
+                            ))}
+                            {result.diceRolls.reaper.critBonus > 0 && (
+                              <span className="crit-bonus">+{result.diceRolls.reaper.critBonus} (crit)</span>
+                            )}
+                            <span className="roll-total">= {result.diceRolls.reaper.total + result.diceRolls.reaper.critBonus}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Modifiers */}
+                    {(result.modifiers.sharpShooterDamage > 0 || result.modifiers.curseDamage > 0 || result.modifiers.baseDamage > 0) && (
+                      <div className="modifiers-section">
+                        <div className="modifiers-label">Modifiers:</div>
+                        <div className="modifiers-list">
+                          {result.modifiers.baseDamage > 0 && (
+                            <span className="modifier">+{result.modifiers.baseDamage} base</span>
+                          )}
+                          {result.modifiers.sharpShooterDamage > 0 && (
+                            <span className="modifier">+{result.modifiers.sharpShooterDamage} sharpshooter</span>
+                          )}
+                          {result.modifiers.curseDamage > 0 && (
+                            <span className="modifier">+{result.modifiers.curseDamage} curse</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* To-hit roll details */}
                     {result.toHit.bonusRolls.length > 0 && (
-                      <span className="advantage-indicator">ADV</span>
+                      <div className="tohit-details">
+                        <span className="tohit-label">To-hit rolls:</span>
+                        <span className="tohit-values">
+                          [{result.toHit.roll}, {result.toHit.bonusRolls.join(', ')}] → {Math.max(result.toHit.roll, ...result.toHit.bonusRolls)}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>

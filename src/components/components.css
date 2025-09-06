@@ -474,6 +474,150 @@
   letter-spacing: 0.1em;
 }
 
+/* Detailed Dice Rolls Styling */
+.dice-rolls-section {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 99, 71, 0.2);
+}
+
+.dice-rolls-header {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dice-rolls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.dice-roll-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.dice-roll-group.necrotic {
+  color: var(--accent-purple);
+}
+
+.dice-roll-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.dice-roll-values {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.dice-roll {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  background: var(--accent-blue);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.dice-roll-group.necrotic .dice-roll {
+  background: var(--accent-purple);
+}
+
+.dice-roll.pair-start {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-right: -1px;
+}
+
+.dice-roll.pair-end {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.crit-bonus {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-red);
+  background: rgba(231, 76, 60, 0.1);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-red);
+}
+
+.roll-total {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: var(--spacing-sm);
+}
+
+.modifiers-section {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(255, 99, 71, 0.2);
+}
+
+.modifiers-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.modifiers-list {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.modifier {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-orange);
+  background: rgba(243, 156, 18, 0.1);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-orange);
+}
+
+.tohit-details {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(255, 99, 71, 0.2);
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.tohit-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tohit-values {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent-green);
+  font-family: monospace;
+}
+
 /* Responsive adjustments for streamlined results */
 
 /* Desktop and Large Tablets */
@@ -717,5 +861,30 @@
   
   .results-header {
     margin-bottom: var(--spacing-sm);
+  }
+  
+  /* Dice rolls responsive */
+  .dice-rolls-section {
+    padding: var(--spacing-xs);
+  }
+  
+  .dice-roll-values {
+    gap: calc(var(--spacing-xs) / 2);
+  }
+  
+  .dice-roll {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+  }
+  
+  .modifiers-list {
+    gap: var(--spacing-xs);
+  }
+  
+  .tohit-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
   }
 }
