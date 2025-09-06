@@ -11,7 +11,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
-  "homepage": "https://jaasoe.github.io/ElvenCrit",
+  "homepage": "https://chriswood12.github.io/dnd-damage-calculator",
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^0.542.0",
