@@ -114,6 +114,9 @@ body {
   gap: var(--spacing-lg);
   flex: 1;
   align-items: start;
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .controls-section {
