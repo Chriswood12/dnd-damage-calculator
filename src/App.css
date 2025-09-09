@@ -53,8 +53,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100vw;
+  max-width: none;
+  margin: 0;
   padding: var(--spacing-md);
   gap: var(--spacing-md);
 }
@@ -425,7 +426,8 @@ body {
 /* Large Desktop (1440px+) */
 @media (min-width: 1440px) {
   .app {
-    max-width: 1600px;
+    width: 100vw;
+    max-width: none;
     padding: var(--spacing-xl);
   }
   
