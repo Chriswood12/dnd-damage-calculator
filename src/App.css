@@ -507,10 +507,10 @@ body {
   }
   
   .roll-section {
-    min-width: auto;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
+    min-width: 0;
+    width: 100vw;
+    max-width: none;
+    margin: 0;
   }
 }
 
