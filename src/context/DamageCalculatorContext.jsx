@@ -263,7 +263,9 @@ export function DamageCalculatorProvider({ children }) {
             const isExcluded = state.effects.excluded.list[i] === 1;
 
             const { result: toHitRoll, rolls: d20Rolls } = rollD20(hasAdvantage && !hasTripleAdvantage, hasDisadvantage, hasTripleAdvantage);
-            const isCrit = state.globalCrit || toHitRoll >= (state.modifiers.critRangeExtended ? state.modifiers.critRange - 1 : state.modifiers.critRange);
+            const baseCritRange = state.modifiers.critRangeExtended ? state.modifiers.critRange - 1 : state.modifiers.critRange;
+            const effectiveCritRange = hasCursed ? Math.min(19, baseCritRange) : baseCritRange;
+            const isCrit = state.globalCrit || toHitRoll >= effectiveCritRange;
 
             // Weapon damage logic based on gun stack
             let weaponDamage = 0;
@@ -305,7 +307,7 @@ export function DamageCalculatorProvider({ children }) {
                 }
             }
             if (hasCursed) {
-                necrotic += state.modifiers.proficiencyBonus;
+                piercing += state.modifiers.proficiencyBonus;
             }
             if (state.reapersBloodHp > 0) {
                 // Remove the old logic: necrotic += Math.floor(state.reapersBloodHp / 10);

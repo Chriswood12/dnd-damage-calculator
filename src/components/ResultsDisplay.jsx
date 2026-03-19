@@ -82,6 +82,7 @@ const ResultsDisplay = () => {
                                                 {res.breakdown?.weaponCount}d{res.breakdown?.weaponSides}: {res.breakdown?.weaponDiceRolls.join(' + ')}
                                                 {res.isCrit && <span style={{ color: 'var(--accent-blood)' }}> + {res.breakdown?.weaponCount * res.breakdown?.weaponSides} (Crit)</span>}
                                                 {res.breakdown?.hasSharpshooter && <span style={{ color: '#ffffff' }}> + 10 (SS)</span>}
+                                                {res.breakdown?.cursedDamage > 0 && <span style={{ color: '#ffffff' }}> + {res.breakdown.cursedDamage} (Curse)</span>}
                                             </div>
                                         </td>
                                         <td style={{ padding: '1rem' }} className="necrotic">
@@ -97,11 +98,6 @@ const ResultsDisplay = () => {
                                                     <div style={{ color: 'var(--accent-blood)' }}>
                                                         Reaper ({res.breakdown.reapersHitBonus * 2}d8): {res.breakdown.reapersNecroticRolls.join(' + ')}
                                                         {res.isCrit && <span style={{ color: 'var(--accent-necrotic)' }}> + {res.breakdown.reapersHitBonus * 2 * 8} (Crit)</span>}
-                                                    </div>
-                                                )}
-                                                {res.breakdown?.cursedDamage > 0 && (
-                                                    <div style={{ color: '#ffffff' }}>
-                                                        Curse: +{res.breakdown.cursedDamage}
                                                     </div>
                                                 )}
                                             </div>
