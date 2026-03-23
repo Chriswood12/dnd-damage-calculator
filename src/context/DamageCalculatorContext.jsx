@@ -183,6 +183,14 @@ function damageCalculatorReducer(state, action) {
             const effect = state.effects[effectType];
             const newValue = effect.list[index] === 1 ? 0 : 1;
 
+            if (newValue === 1 && (effectType === 'precision' || effectType === 'trip')) {
+                const currentPrecision = state.effects.precision.list.reduce((a, b) => a + b, 0);
+                const currentTrip = state.effects.trip.list.reduce((a, b) => a + b, 0);
+                if (currentPrecision + currentTrip >= 5) {
+                    return state;
+                }
+            }
+
             return {
                 ...state,
                 effects: {
@@ -199,6 +207,33 @@ function damageCalculatorReducer(state, action) {
         case actionTypes.TOGGLE_ALL_EFFECTS: {
             const { effectType: allEffectType, enable } = action.payload;
             const allEffect = state.effects[allEffectType];
+
+            if (enable && (allEffectType === 'precision' || allEffectType === 'trip')) {
+                const otherEffectType = allEffectType === 'precision' ? 'trip' : 'precision';
+                const otherManeuversUsed = state.effects[otherEffectType].list.reduce((a, b) => a + b, 0);
+                let available = 5 - otherManeuversUsed;
+
+                const newList = allEffect.list.map(() => {
+                    if (available > 0) {
+                        available--;
+                        return 1;
+                    }
+                    return 0;
+                });
+
+                return {
+                    ...state,
+                    effects: {
+                        ...state.effects,
+                        [allEffectType]: {
+                            ...allEffect,
+                            list: newList,
+                            savedList: allEffect.savedList.map((_, idx) => idx < newList.length ? newList[idx] : 0)
+                        }
+                    }
+                };
+            }
+
             const allValue = enable ? 1 : 0;
 
             return {
