@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDamageCalculator } from '../context/DamageCalculatorContext';
-import { Crosshair, Ghost, Skull, ArrowUp, ArrowDown } from 'lucide-react';
+import { Crosshair, Ghost, Skull, ArrowUp, ArrowDown, Target, Scissors } from 'lucide-react';
 
 const AttackConfig = () => {
     const { state, actions } = useDamageCalculator();
@@ -10,7 +10,9 @@ const AttackConfig = () => {
         hex: <Ghost size={16} />,
         cursed: <Skull size={16} />,
         advantage: <ArrowUp size={16} />,
-        disadvantage: <ArrowDown size={16} />
+        disadvantage: <ArrowDown size={16} />,
+        precision: <Target size={16} />,
+        trip: <Scissors size={16} />
     };
 
     const effectLabels = {
@@ -18,14 +20,24 @@ const AttackConfig = () => {
         hex: 'Hex',
         cursed: 'Cursed',
         advantage: 'Triple Advantage',
-        disadvantage: 'Disadvantage'
+        disadvantage: 'Disadvantage',
+        precision: 'Precision Attack',
+        trip: 'Trip Attack'
     };
+
+    const maneuverChargesUsed = state.effects.precision.list.reduce((a, b) => a + b, 0) + state.effects.trip.list.reduce((a, b) => a + b, 0);
+    const maneuverChargesLeft = 5 - maneuverChargesUsed;
 
     return (
         <div style={{ marginTop: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2>Attacks ({state.attackCount})</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <h2 style={{ display: 'flex', alignItems: 'center' }}>
+                    Attacks ({state.attackCount})
+                    <span style={{ fontSize: '1rem', marginLeft: '1rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', color: maneuverChargesLeft < 0 ? 'var(--accent-blood)' : 'var(--text-secondary)' }}>
+                        Maneuvers: {maneuverChargesLeft} / 5
+                    </span>
+                </h2>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     {Object.keys(state.effects).filter(key => key !== 'excluded').map(effectType => (
                         <button
                             key={effectType}

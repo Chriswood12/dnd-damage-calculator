@@ -35,11 +35,14 @@ const initialState = {
         cursed: { list: [0, 0, 0], savedList: Array(8).fill(0) },
         advantage: { list: [0, 0, 0], savedList: Array(8).fill(0) },
         disadvantage: { list: [0, 0, 0], savedList: Array(8).fill(0) },
+        precision: { list: [0, 0, 0], savedList: Array(8).fill(0) },
+        trip: { list: [0, 0, 0], savedList: Array(8).fill(0) },
         excluded: { list: [0, 0, 0], savedList: Array(8).fill(0) }
     },
 
 
     // Results (kept in state for initialization but recalculated in provider)
+    targetAC: '',
     totalDamage: 0,
     necroticDamage: 0,
     piercingDamage: 0,
@@ -57,6 +60,7 @@ const actionTypes = {
     UPDATE_MODIFIER: 'UPDATE_MODIFIER',
     TOGGLE_EFFECT: 'TOGGLE_EFFECT',
     TOGGLE_ALL_EFFECTS: 'TOGGLE_ALL_EFFECTS',
+    SET_TARGET_AC: 'SET_TARGET_AC',
     SET_ATTACK_RESULTS: 'SET_ATTACK_RESULTS',
     UPDATE_TOTALS: 'UPDATE_TOTALS',
     RESET_STATE: 'RESET_STATE',
@@ -210,6 +214,9 @@ function damageCalculatorReducer(state, action) {
             };
         }
 
+        case actionTypes.SET_TARGET_AC:
+            return { ...state, targetAC: action.payload };
+
         case actionTypes.SET_ATTACK_RESULTS:
             return { ...state, attackResults: action.payload };
 
@@ -260,6 +267,8 @@ export function DamageCalculatorProvider({ children }) {
             const hasSharpshooter = state.effects.sharpShooter.list[i] === 1;
             const hasHex = state.effects.hex.list[i] === 1;
             const hasCursed = state.effects.cursed.list[i] === 1;
+            const hasPrecision = state.effects.precision.list[i] === 1;
+            const hasTrip = state.effects.trip.list[i] === 1;
             const isExcluded = state.effects.excluded.list[i] === 1;
 
             const { result: toHitRoll, rolls: d20Rolls } = rollD20(hasAdvantage && !hasTripleAdvantage, hasDisadvantage, hasTripleAdvantage);
@@ -292,6 +301,17 @@ export function DamageCalculatorProvider({ children }) {
 
             let piercing = weaponDamage + state.modifiers.damageBonus;
             if (hasSharpshooter) piercing += 10;
+
+            let tripRoll = 0;
+            if (hasTrip) {
+                tripRoll = rollDie(10);
+                if (isCrit) {
+                    piercing += 10 + tripRoll;
+                } else {
+                    piercing += tripRoll;
+                }
+            }
+
             // Note: currentGunStack value itself doesn't add flat damage here, 
             // it changes the dice above. If it should also add flat damage, 
             // we can add it back: piercing += state.currentGunStack;
@@ -332,6 +352,13 @@ export function DamageCalculatorProvider({ children }) {
             }
 
             let toHit = toHitRoll + state.modifiers.toHitBonus - (hasSharpshooter ? 5 : 0) + reapersHitBonus;
+
+            let precisionRoll = 0;
+            if (hasPrecision) {
+                precisionRoll = rollDie(10);
+                toHit += precisionRoll;
+            }
+
             let blessBonus = 0;
             if (state.bless) {
                 blessBonus = rollDie(4);
@@ -356,6 +383,10 @@ export function DamageCalculatorProvider({ children }) {
                     reapersNecroticDamage,
                     reapersNecroticRolls,
                     hasSharpshooter,
+                    hasPrecision,
+                    hasTrip,
+                    precisionRoll,
+                    tripRoll,
                     cursedDamage: hasCursed ? state.modifiers.proficiencyBonus : 0,
                     d20Rolls
                 }
@@ -387,9 +418,14 @@ export function DamageCalculatorProvider({ children }) {
         let piercing = 0;
         let necrotic = 0;
 
+        const ac = parseInt(state.targetAC);
+        const hasTargetAC = !isNaN(ac) && state.targetAC !== '';
+
         state.attackResults.forEach((res, i) => {
             const isExcluded = state.effects.excluded.list[i] === 1;
-            if (!isExcluded) {
+            const isMiss = hasTargetAC && res.toHit < ac && !res.isCrit;
+
+            if (!isExcluded && !isMiss) {
                 piercing += res.piercing;
                 necrotic += res.necrotic;
             }
@@ -408,6 +444,11 @@ export function DamageCalculatorProvider({ children }) {
         toggleActionSurge: useCallback(() => dispatch({ type: actionTypes.TOGGLE_ACTION_SURGE }), []),
         toggleReload: useCallback(() => dispatch({ type: actionTypes.TOGGLE_RELOAD }), []),
         toggleGlobalCrit: useCallback(() => dispatch({ type: actionTypes.TOGGLE_GLOBAL_CRIT }), []),
+
+        setTargetAC: useCallback((value) => dispatch({
+            type: actionTypes.SET_TARGET_AC,
+            payload: value
+        }), []),
 
         setGunStack: useCallback((value) => dispatch({
             type: actionTypes.SET_GUN_STACK,

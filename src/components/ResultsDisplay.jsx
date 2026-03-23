@@ -7,12 +7,32 @@ const ResultsDisplay = () => {
 
     return (
         <div className="glass-card" style={{ marginTop: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h2>Combat Results</h2>
-                <button className="btn btn-primary" onClick={actions.rollAttacks}>
-                    <Play size={20} />
-                    Roll Attacks
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Target AC:</span>
+                        <input
+                            type="number"
+                            value={state.targetAC}
+                            onChange={(e) => actions.setTargetAC(e.target.value)}
+                            placeholder="None"
+                            style={{
+                                width: '60px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'white',
+                                fontSize: '1rem',
+                                fontWeight: 'bold',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+                    <button className="btn btn-primary" onClick={actions.rollAttacks}>
+                        <Play size={20} />
+                        Roll Attacks
+                    </button>
+                </div>
             </div>
 
             <div className="results-summary">
@@ -46,17 +66,22 @@ const ResultsDisplay = () => {
                         <tbody>
                             {state.attackResults.map((res, index) => {
                                 const isExcluded = state.effects.excluded.list[index] === 1;
+                                const ac = parseInt(state.targetAC);
+                                const hasTargetAC = !isNaN(ac) && state.targetAC !== '';
+                                const isMiss = hasTargetAC && res.toHit < ac && !res.isCrit;
+
                                 return (
                                     <tr key={res.id} style={{
                                         borderBottom: '1px solid var(--border-color)',
                                         background: res.isCrit ? 'rgba(153, 27, 27, 0.1)' : 'transparent',
-                                        opacity: isExcluded ? 0.4 : 1
+                                        opacity: isExcluded || isMiss ? 0.4 : 1
                                     }}>
                                         <td style={{ padding: '1rem' }}>
                                             #{index + 1} {res.isCrit && <span style={{ color: 'var(--accent-blood)', fontWeight: 800, fontSize: '0.75rem', textShadow: '0 0 5px var(--accent-blood)' }}>CRIT!</span>}
                                         </td>
                                         <td style={{ padding: '1rem' }}>
                                             {res.toHit}
+                                            {isMiss && !isExcluded && <span style={{ marginLeft: '0.5rem', color: '#9ca3af', fontWeight: 'bold', fontSize: '0.75rem', border: '1px solid #9ca3af', padding: '0.1rem 0.3rem', borderRadius: '4px' }}>MISS</span>}
                                             <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                                                 d20: {res.breakdown?.d20Rolls?.join(', ')}
                                                 {res.bondBonus && (
@@ -65,8 +90,13 @@ const ResultsDisplay = () => {
                                                     </span>
                                                 )}
                                                 {res.breakdown?.blessBonus > 0 && (
-                                                    <span style={{ color: '#fbbf24', marginLeft: res.bondBonus || res.breakdown?.reapersHitBonus ? '0.5rem' : 0 }}>
+                                                    <span style={{ color: '#fbbf24', marginLeft: '0.5rem' }}>
                                                         (+{res.breakdown.blessBonus} Bless)
+                                                    </span>
+                                                )}
+                                                {res.breakdown?.hasPrecision && (
+                                                    <span style={{ color: 'var(--accent-blue)', marginLeft: '0.5rem' }}>
+                                                        (+{res.breakdown.precisionRoll} Precision)
                                                     </span>
                                                 )}
                                                 {res.breakdown?.reapersHitBonus > 0 && (
@@ -82,6 +112,7 @@ const ResultsDisplay = () => {
                                                 {res.breakdown?.weaponCount}d{res.breakdown?.weaponSides}: {res.breakdown?.weaponDiceRolls.join(' + ')}
                                                 {res.isCrit && <span style={{ color: 'var(--accent-blood)' }}> + {res.breakdown?.weaponCount * res.breakdown?.weaponSides} (Crit)</span>}
                                                 {res.breakdown?.hasSharpshooter && <span style={{ color: '#ffffff' }}> + 10 (SS)</span>}
+                                                {res.breakdown?.hasTrip && <span style={{ color: 'var(--accent-blue)' }}> + {res.breakdown.tripRoll}{res.isCrit ? ' + 10 ' : ' '} (Trip)</span>}
                                                 {res.breakdown?.cursedDamage > 0 && <span style={{ color: '#ffffff' }}> + {res.breakdown.cursedDamage} (Curse)</span>}
                                             </div>
                                         </td>
