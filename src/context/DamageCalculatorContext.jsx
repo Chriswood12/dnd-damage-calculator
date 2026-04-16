@@ -386,18 +386,34 @@ export function DamageCalculatorProvider({ children }) {
                 necrotic += reapersNecroticDamage;
             }
 
-            let toHit = toHitRoll + state.modifiers.toHitBonus - (hasSharpshooter ? 5 : 0) + reapersHitBonus;
-
-            let precisionRoll = 0;
-            if (hasPrecision) {
-                precisionRoll = rollDie(10);
-                toHit += precisionRoll;
-            }
+            let toHitBase = toHitRoll + state.modifiers.toHitBonus - (hasSharpshooter ? 5 : 0) + reapersHitBonus;
 
             let blessBonus = 0;
             if (state.bless) {
                 blessBonus = rollDie(4);
-                toHit += blessBonus;
+                toHitBase += blessBonus;
+            }
+
+            let toHit = toHitBase;
+            
+            let precisionRoll = 0;
+            let precisionUsed = false;
+            const ac = parseInt(state.targetAC);
+            const hasTargetAC = !isNaN(ac) && state.targetAC !== '';
+
+            if (hasPrecision) {
+                let shouldRollPrecision = true;
+                if (!isCrit && hasTargetAC) {
+                    if (toHit >= ac) {
+                        shouldRollPrecision = false;
+                    }
+                }
+                
+                if (shouldRollPrecision) {
+                    precisionRoll = rollDie(10);
+                    toHit += precisionRoll;
+                    precisionUsed = true;
+                }
             }
 
             results.push({
@@ -418,7 +434,7 @@ export function DamageCalculatorProvider({ children }) {
                     reapersNecroticDamage,
                     reapersNecroticRolls,
                     hasSharpshooter,
-                    hasPrecision,
+                    hasPrecision: precisionUsed,
                     hasTrip,
                     precisionRoll,
                     tripRoll,
