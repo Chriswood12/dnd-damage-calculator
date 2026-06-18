@@ -105,6 +105,28 @@ const DprChart = () => {
                             activeDot={{ r: 6, fill: 'var(--accent-gold)', stroke: 'var(--bg-color)', strokeWidth: 2 }}
                             animationDuration={500}
                         />
+                        <Line 
+                            name="Force Bless (No Hex)"
+                            type="monotone" 
+                            dataKey="dprBless" 
+                            stroke="#4db8ff" 
+                            strokeWidth={2}
+                            strokeDasharray="3 3"
+                            dot={false}
+                            activeDot={{ r: 4, fill: '#4db8ff' }}
+                            animationDuration={500}
+                        />
+                        <Line 
+                            name="Force Hex (No Bless)"
+                            type="monotone" 
+                            dataKey="dprHex" 
+                            stroke="#b84dff" 
+                            strokeWidth={2}
+                            strokeDasharray="3 3"
+                            dot={false}
+                            activeDot={{ r: 4, fill: '#b84dff' }}
+                            animationDuration={500}
+                        />
                     </LineChart>
                 </ResponsiveContainer>
             </div>

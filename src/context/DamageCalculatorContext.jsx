@@ -194,8 +194,14 @@ function damageCalculatorReducer(state, action) {
                 }
             }
 
+            let newBless = state.bless;
+            if (effectType === 'hex' && newValue === 1) {
+                newBless = false;
+            }
+
             return {
                 ...state,
+                bless: newBless,
                 effects: {
                     ...state.effects,
                     [effectType]: {
@@ -238,9 +244,15 @@ function damageCalculatorReducer(state, action) {
             }
 
             const allValue = enable ? 1 : 0;
+            
+            let newBless = state.bless;
+            if (allEffectType === 'hex' && enable) {
+                newBless = false;
+            }
 
             return {
                 ...state,
+                bless: newBless,
                 effects: {
                     ...state.effects,
                     [allEffectType]: {
@@ -278,8 +290,21 @@ function damageCalculatorReducer(state, action) {
         case actionTypes.RESET_STATE:
             return { ...initialState };
 
-        case actionTypes.TOGGLE_BLESS:
-            return { ...state, bless: !state.bless };
+        case actionTypes.TOGGLE_BLESS: {
+            const newBless = !state.bless;
+            let newEffects = state.effects;
+            if (newBless) {
+                newEffects = {
+                    ...state.effects,
+                    hex: {
+                        ...state.effects.hex,
+                        list: Array(state.attackCount).fill(0),
+                        savedList: Array(state.attackCount).fill(0)
+                    }
+                };
+            }
+            return { ...state, bless: newBless, effects: newEffects };
+        }
 
         case actionTypes.TOGGLE_EMBOLDENING_BOND:
             return { ...state, emboldeningBond: !state.emboldeningBond };

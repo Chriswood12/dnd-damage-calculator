@@ -1,6 +1,6 @@
 import { rollDie, rollD20 } from './dice';
 
-const simulateRound = (state, ac, forceNoSharpshooter) => {
+const simulateRound = (state, ac, mode = 'current') => {
     let roundResults = [];
 
     for (let i = 0; i < state.attackCount; i++) {
@@ -12,8 +12,19 @@ const simulateRound = (state, ac, forceNoSharpshooter) => {
         const hasTripleAdvantage = state.effects.advantage.list[i] === 1;
         const hasDisadvantage = state.effects.disadvantage.list[i] === 1;
         const hasAdvantage = hasTripleAdvantage || hasReapersBlood;
-        const hasSharpshooter = forceNoSharpshooter ? false : (state.effects.sharpShooter.list[i] === 1);
-        const hasHex = state.effects.hex.list[i] === 1;
+        const hasSharpshooter = mode === 'noSS' ? false : (state.effects.sharpShooter.list[i] === 1);
+        
+        let hasHex = state.effects.hex.list[i] === 1;
+        let hasBless = state.bless;
+
+        if (mode === 'forceBless') {
+            hasBless = true;
+            hasHex = false;
+        } else if (mode === 'forceHex') {
+            hasHex = true;
+            hasBless = false;
+        }
+
         const hasCursed = state.effects.cursed.list[i] === 1;
         const hasTrip = state.effects.trip.list[i] === 1;
 
@@ -70,7 +81,7 @@ const simulateRound = (state, ac, forceNoSharpshooter) => {
         }
 
         let toHitBase = toHitRoll + state.modifiers.toHitBonus - (hasSharpshooter ? 5 : 0) + reapersHitBonus;
-        if (state.bless) toHitBase += rollDie(4);
+        if (hasBless) toHitBase += rollDie(4);
 
         roundResults.push({ id: i, toHit: toHitBase, isCrit, piercing, necrotic });
     }
@@ -109,16 +120,22 @@ export const simulateDPR = (state, iterations = 1000) => {
     for (let ac = 10; ac <= 30; ac++) {
         let totalCurrent = 0;
         let totalNoSS = 0;
+        let totalBless = 0;
+        let totalHex = 0;
 
         for (let iter = 0; iter < iterations; iter++) {
-            totalCurrent += simulateRound(state, ac, false);
-            totalNoSS += simulateRound(state, ac, true);
+            totalCurrent += simulateRound(state, ac, 'current');
+            totalNoSS += simulateRound(state, ac, 'noSS');
+            totalBless += simulateRound(state, ac, 'forceBless');
+            totalHex += simulateRound(state, ac, 'forceHex');
         }
 
         data.push({
             ac,
             dpr: parseFloat((totalCurrent / iterations).toFixed(2)),
-            dprNoSS: parseFloat((totalNoSS / iterations).toFixed(2))
+            dprNoSS: parseFloat((totalNoSS / iterations).toFixed(2)),
+            dprBless: parseFloat((totalBless / iterations).toFixed(2)),
+            dprHex: parseFloat((totalHex / iterations).toFixed(2))
         });
     }
 
