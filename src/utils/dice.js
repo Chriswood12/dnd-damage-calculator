@@ -49,3 +49,62 @@ export const rollD20 = (advantage = false, disadvantage = false, tripleAdvantage
 
   return { result: rolls[0], rolls };
 };
+
+/**
+ * Parses a dice string (e.g. "2d4+10 + 5d8 - 2") and evaluates it.
+ * @param {string} diceString - The string to parse.
+ * @returns {object} - { total, breakdown }
+ */
+export const parseAndRollDiceString = (diceString) => {
+  if (!diceString) return null;
+  const normalized = diceString.replace(/\s+/g, '').toLowerCase();
+  
+  const tokens = normalized.match(/([+-]?(?:\d*d\d+|\d+))/g);
+  if (!tokens) return null;
+  
+  let total = 0;
+  const breakdown = [];
+  
+  tokens.forEach(token => {
+    let sign = 1;
+    if (token.startsWith('-')) sign = -1;
+    if (token.startsWith('+') || token.startsWith('-')) {
+      token = token.substring(1);
+    }
+    
+    if (token.includes('d')) {
+      let [countStr, sidesStr] = token.split('d');
+      const count = countStr === '' ? 1 : parseInt(countStr, 10);
+      const sides = parseInt(sidesStr, 10);
+      
+      const rolls = [];
+      let sum = 0;
+      for (let i = 0; i < count; i++) {
+        const roll = rollDie(sides);
+        rolls.push(roll);
+        sum += roll;
+      }
+      
+      const val = sum * sign;
+      total += val;
+      breakdown.push({
+        type: 'dice',
+        count,
+        sides,
+        sign,
+        rolls,
+        value: val
+      });
+    } else {
+      const val = parseInt(token, 10) * sign;
+      total += val;
+      breakdown.push({
+        type: 'constant',
+        sign,
+        value: val
+      });
+    }
+  });
+  
+  return { total, breakdown };
+};

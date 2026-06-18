@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useDamageCalculator } from '../context/DamageCalculatorContext';
 import { Crosshair, Ghost, Skull, ArrowUp, ArrowDown, Target, Scissors } from 'lucide-react';
 
@@ -54,9 +55,23 @@ const AttackConfig = () => {
                 </div>
             </div>
 
-            <div className="attack-grid">
+            <motion.div 
+                className="attack-grid"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                    visible: { transition: { staggerChildren: 0.1 } }
+                }}
+            >
                 {Array.from({ length: state.attackCount }).map((_, index) => (
-                    <div key={index} className="glass-card attack-card">
+                    <motion.div 
+                        key={index} 
+                        className="glass-card attack-card"
+                        variants={{
+                            hidden: { opacity: 0, y: 20 },
+                            visible: { opacity: 1, y: 0 }
+                        }}
+                    >
                         <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Attack #{index + 1}</h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             {Object.keys(state.effects).filter(key => key !== 'excluded').map(effectType => (
@@ -71,9 +86,9 @@ const AttackConfig = () => {
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
         </div>
     );
 };

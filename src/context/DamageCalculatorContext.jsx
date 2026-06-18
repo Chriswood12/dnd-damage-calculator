@@ -19,8 +19,8 @@ const initialState = {
     // Configurable modifiers
     modifiers: {
         proficiencyBonus: 5, // Updated to +5 for level 14
-        toHitBonus: 12,
-        damageBonus: 6,
+        toHitBonus: 15,
+        damageBonus: 8,
         critRange: 20,
         critRangeExtended: false,
     },
@@ -46,7 +46,8 @@ const initialState = {
     totalDamage: 0,
     necroticDamage: 0,
     piercingDamage: 0,
-    attackResults: []
+    attackResults: [],
+    rollHistory: []
 };
 
 // Action types
@@ -66,7 +67,9 @@ const actionTypes = {
     RESET_STATE: 'RESET_STATE',
     TOGGLE_BLESS: 'TOGGLE_BLESS',
     TOGGLE_EMBOLDENING_BOND: 'TOGGLE_EMBOLDENING_BOND',
-    TOGGLE_REAPERS_BLOOD: 'TOGGLE_REAPERS_BLOOD'
+    TOGGLE_REAPERS_BLOOD: 'TOGGLE_REAPERS_BLOOD',
+    ADD_TO_HISTORY: 'ADD_TO_HISTORY',
+    CLEAR_HISTORY: 'CLEAR_HISTORY'
 };
 
 // Reducer function
@@ -255,6 +258,15 @@ function damageCalculatorReducer(state, action) {
         case actionTypes.SET_ATTACK_RESULTS:
             return { ...state, attackResults: action.payload };
 
+        case actionTypes.ADD_TO_HISTORY:
+            return { 
+                ...state, 
+                rollHistory: [action.payload, ...state.rollHistory].slice(0, 10) 
+            };
+
+        case actionTypes.CLEAR_HISTORY:
+            return { ...state, rollHistory: [] };
+
         case actionTypes.UPDATE_TOTALS:
             return {
                 ...state,
@@ -396,25 +408,8 @@ export function DamageCalculatorProvider({ children }) {
 
             let toHit = toHitBase;
             
-            let precisionRoll = 0;
-            let precisionUsed = false;
-            const ac = parseInt(state.targetAC);
-            const hasTargetAC = !isNaN(ac) && state.targetAC !== '';
-
-            if (hasPrecision) {
-                let shouldRollPrecision = true;
-                if (!isCrit && hasTargetAC) {
-                    if (toHit >= ac) {
-                        shouldRollPrecision = false;
-                    }
-                }
-                
-                if (shouldRollPrecision) {
-                    precisionRoll = rollDie(10);
-                    toHit += precisionRoll;
-                    precisionUsed = true;
-                }
-            }
+            // We will defer Precision and Bond logic to a second pass so we can optimize
+            // based on the target AC.
 
             results.push({
                 id: i,
@@ -434,9 +429,9 @@ export function DamageCalculatorProvider({ children }) {
                     reapersNecroticDamage,
                     reapersNecroticRolls,
                     hasSharpshooter,
-                    hasPrecision: precisionUsed,
+                    hasPrecision: false,
                     hasTrip,
-                    precisionRoll,
+                    precisionRoll: 0,
                     tripRoll,
                     cursedDamage: hasCursed ? state.modifiers.proficiencyBonus : 0,
                     d20Rolls
@@ -449,20 +444,78 @@ export function DamageCalculatorProvider({ children }) {
             }
         }
 
-        // Apply Emboldening Bond to the lowest roll
-        if (state.emboldeningBond && results.length > 0) {
-            let lowestIdx = 0;
-            for (let i = 1; i < results.length; i++) {
-                if (results[i].toHit < results[lowestIdx].toHit) {
-                    lowestIdx = i;
+        const ac = parseInt(state.targetAC);
+        const hasTargetAC = !isNaN(ac) && state.targetAC !== '';
+
+        // Pass 2: Apply Emboldening Bond and Precision optimally
+        if (hasTargetAC) {
+            // Find misses, sorted by closest to hitting
+            let misses = results.filter(r => !r.isCrit && r.toHit < ac).sort((a, b) => b.toHit - a.toHit);
+
+            // Apply Bond to the miss most likely to become a hit (needs <= 4)
+            if (state.emboldeningBond && misses.length > 0) {
+                let bestBondTarget = misses.find(m => (ac - m.toHit) <= 4) || misses[0];
+                const bondBonus = rollDie(4);
+                bestBondTarget.toHit += bondBonus;
+                bestBondTarget.bondBonus = bondBonus;
+                
+                // Re-evaluate misses in case bond made it hit
+                misses = results.filter(r => !r.isCrit && r.toHit < ac).sort((a, b) => b.toHit - a.toHit);
+            }
+
+            // Apply Precision to misses most likely to become a hit (needs <= 10)
+            for (let m of misses) {
+                const hasPrecision = state.effects.precision.list[m.id] === 1;
+                if (hasPrecision && (ac - m.toHit) <= 10) {
+                    const pRoll = rollDie(10);
+                    m.toHit += pRoll;
+                    m.breakdown.hasPrecision = true;
+                    m.breakdown.precisionRoll = pRoll;
                 }
             }
-            const bondBonus = rollDie(4);
-            results[lowestIdx].toHit += bondBonus;
-            results[lowestIdx].bondBonus = bondBonus; // Track it for display
+        } else {
+            // No Target AC, just apply them
+            for (let r of results) {
+                if (state.effects.precision.list[r.id] === 1 && !r.isCrit) {
+                    const pRoll = rollDie(10);
+                    r.toHit += pRoll;
+                    r.breakdown.hasPrecision = true;
+                    r.breakdown.precisionRoll = pRoll;
+                }
+            }
+            if (state.emboldeningBond && results.length > 0) {
+                let lowestTarget = results.reduce((min, r) => r.toHit < min.toHit ? r : min, results[0]);
+                const bondBonus = rollDie(4);
+                lowestTarget.toHit += bondBonus;
+                lowestTarget.bondBonus = bondBonus;
+            }
+        }
+
+        // Recalculate totals
+        totalPiercing = 0;
+        totalNecrotic = 0;
+        for (let r of results) {
+            if (!r.isExcluded) {
+                totalPiercing += r.piercing;
+                totalNecrotic += r.necrotic;
+            }
         }
 
         dispatch({ type: actionTypes.SET_ATTACK_RESULTS, payload: results });
+        
+        // Also save to history if there are results
+        if (results.length > 0) {
+            dispatch({ 
+                type: actionTypes.ADD_TO_HISTORY, 
+                payload: { 
+                    timestamp: new Date().toISOString(), 
+                    results,
+                    totalPiercing,
+                    totalNecrotic,
+                    targetAC: state.targetAC
+                } 
+            });
+        }
     }, [state]);
 
     const totals = useMemo(() => {
@@ -531,6 +584,8 @@ export function DamageCalculatorProvider({ children }) {
         toggleBless: useCallback(() => dispatch({ type: actionTypes.TOGGLE_BLESS }), []),
         toggleEmboldeningBond: useCallback(() => dispatch({ type: actionTypes.TOGGLE_EMBOLDENING_BOND }), []),
         toggleReapersBlood: useCallback(() => dispatch({ type: actionTypes.TOGGLE_REAPERS_BLOOD }), []),
+
+        clearHistory: useCallback(() => dispatch({ type: actionTypes.CLEAR_HISTORY }), []),
 
         resetState: useCallback(() => dispatch({ type: actionTypes.RESET_STATE }), [])
     };
